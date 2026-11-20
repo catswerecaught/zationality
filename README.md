@@ -2,27 +2,102 @@
 
 知乎 × Rationality。一个本地运行的问答论证与现实核查工作台，为「知乎 AI 黑客松 · AI × 知识与探索」制作。
 
-## 本地运行
+## 部署到自己的电脑
 
-要求 Node.js 22+、npm 和已初始化的官方 `zhihu-cli`。本机已安装并复用 macOS 钥匙串中的知乎凭证。
+这是一个运行在本机的全栈应用。每位使用者都需要自行准备 Node.js、知乎官方 CLI 和自己的知乎凭证，以及自己的 DeepSeek API Key。项目不包含、不代管这些凭证，也不会把它们发给 GitHub。
+
+### 1. 安装运行环境
+
+- 安装 Node.js 22 或更高版本（包含 npm）：<https://nodejs.org/>
+- 安装知乎官方 `zhihu-cli`。CLI 不包含在本项目中；请按照知乎官方 CLI / Zhihu Skill 提供的安装说明安装适用于自己系统的版本。官方支持 macOS、Windows 和 Linux。
+- 打开 <https://developer.zhihu.com/profile>，登录自己的知乎账号并按官方说明配置 CLI 凭证。凭证由 CLI 保存和使用；不要把 Access Secret 发给项目作者或写入项目文件。
+- 准备 DeepSeek API Key：<https://platform.deepseek.com/>。每位使用者使用自己的 Key，并仅配置在下面的服务端环境文件中。
+
+可以先在终端确认 Node/npm 可用：
 
 ```sh
-npm install
+node --version
+npm --version
+```
+
+### 2. 下载项目并安装依赖
+
+macOS / Linux 终端：
+
+```sh
+git clone https://github.com/catswerecaught/zationality.git
+cd zationality
+npm ci
+```
+
+Windows PowerShell：
+
+```powershell
+git clone https://github.com/catswerecaught/zationality.git
+Set-Location zationality
+npm ci
+```
+
+### 3. 配置本机密钥
+
+在项目根目录复制环境变量模板。
+
+macOS / Linux：
+
+```sh
 cp .env.example .env.local
-# 在 .env.local 中配置 DEEPSEEK_API_KEY
+```
+
+Windows PowerShell：
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+用文本编辑器打开 `.env.local`，至少填写自己的 DeepSeek Key：
+
+```dotenv
+DEEPSEEK_API_KEY=在这里填写自己的DeepSeek_API_Key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-flash
+PORT=3001
+```
+
+不要添加引号，不要在 `src/` 前端代码中填写 Key，也不要提交 `.env.local`。Git 忽略规则已排除 `.env.local`。若 `zhihu-cli` 没安装在程序默认位置，在同一文件里增加它的绝对路径，例如：
+
+```dotenv
+ZHIHU_CLI_PATH=/你的/CLI/绝对路径/zhihu-cli
+```
+
+Windows 路径示例：`ZHIHU_CLI_PATH=C:\\Users\\你的用户名\\...\\zhihu-cli.exe`。如果官方 CLI 使用其他文件名或安装目录，以实际路径为准。
+
+### 4. 启动开发版
+
+在项目根目录运行：
+
+```sh
 npm run dev
 ```
 
-访问 http://127.0.0.1:5173 。开发 API 监听 http://127.0.0.1:3001 。凭证只由服务端读取，`.env.local` 不打包、不提交、不返回浏览器；本机文件权限为 0600。
+保持终端窗口运行，然后浏览器访问 <http://127.0.0.1:5173>。开发 API 地址是 <http://127.0.0.1:3001>；可以打开 <http://127.0.0.1:3001/api/health> 检查服务。正常时 `ok` 为 `true`，并且 `deepseek_configured`、`zhihu_cli_installed` 都为 `true`。
 
-无需热更新的演示部署：
+### 5. 运行本地生产构建（可选）
 
 ```sh
 npm run build
 npm start
 ```
 
-访问 http://127.0.0.1:3001 。服务只监听本机回环地址。
+然后访问 <http://127.0.0.1:3001>。停止开发版或生产版都可以在运行它的终端按 `Ctrl+C`。
+
+### 常见问题
+
+- **提示未配置 DeepSeek Key：** 确认 `.env.local` 位于项目根目录、变量名为 `DEEPSEEK_API_KEY`，并重启服务。
+- **提示知乎 CLI 不可用：** 确认已安装 CLI 并完成知乎授权；如果 CLI 不在默认目录，在 `.env.local` 设置正确的 `ZHIHU_CLI_PATH` 后重启。
+- **依赖或语法报错：** 检查 `node --version` 是否为 22 或更高，再运行 `npm ci`。
+- **页面无法连接 API：** 开发时两个服务都由 `npm run dev` 启动；确认终端没有报错，且没有其他程序占用 5173 或 3001 端口。
+
+本应用默认只监听本机回环地址 `127.0.0.1`，供安装者自己的电脑使用，不是公网部署。`.env.local`、知乎凭证和本地报告数据不会随 GitHub 仓库分发。
 
 ## 现场演示
 
